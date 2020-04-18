@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rails-template-stimulus-sidekiq
+spec:
+  selector:
+    matchLabels:
+      app: rails-template-stimulus-sidekiq
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 50%
+  template:
+    metadata:
+      labels:
+        app: rails-template-stimulus-sidekiq
+    spec:
+      containers:
+        - name: sidekiq
+          image: # TODO Paste your image url
+          command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+          env:
+          - name: RAILS_ENV
+            value: "production"
+          - name: RAILS_LOG_TO_STDOUT
+            value: "true"
+          - name: RAILS_MASTER_KEY
+            valueFrom:
+              secretKeyRef:
+                name: rails-template-stimulus-secrets
+                key: rails-template-stimulus-master-key
+          resources:
+            requests:
+              cpu: 500m
+              memory: 500Mi
+            limits:
+              cpu: 1000m
+              memory: 1000Mi
+          ports:
+            - containerPort: 7433
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7433
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7433
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            successThreshold: 2
+            failureThreshold: 2
+            timeoutSeconds: 5
+          lifecycle:
+            preStop:
+              exec:
+                command: ["k8s/sidekiq_quiet"]
+      terminationGracePeriodSeconds: 300

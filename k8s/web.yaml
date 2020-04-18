@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rails-template-stimulus-web
+spec:
+  selector:
+    matchLabels:
+      app: rails-template-stimulus-web
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 50%
+  template:
+    metadata:
+      labels:
+        app: rails-template-stimulus-web
+    spec:
+      containers:
+        - name: app
+          image: # TODO Paste your image url
+          command: ["bin/rails", "s", "-b", "0.0.0.0"]
+          env:
+          - name: RAILS_ENV
+            value: "production"
+          - name: RAILS_LOG_TO_STDOUT
+            value: "true"
+          - name: RAILS_SERVE_STATIC_FILES
+            value: "true"
+          - name: RAILS_MASTER_KEY
+            valueFrom:
+              secretKeyRef:
+                name: rails-template-stimulus-secrets
+                key: rails-template-stimulus-master-key
+          volumeMounts:
+            - mountPath: /assets
+              name: assets
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 1000Mi
+            limits:
+              cpu: 3600m
+              memory: 3276Mi
+          readinessProbe:
+            httpGet:
+              path: /health_check
+              port: 3000
+            periodSeconds: 5
+            successThreshold: 2
+            failureThreshold: 2
+            timeoutSeconds: 5
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - "cp -r /app/public/* /assets"
+        - name: nginx
+          image: nginx:1.17-alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - mountPath: /assets
+              name: assets
+              readOnly: true
+            - mountPath: /etc/nginx/nginx.conf
+              name: nginx-conf
+              subPath: nginx.conf
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /health_check
+              port: 80
+            periodSeconds: 5
+            successThreshold: 2
+            failureThreshold: 2
+            timeoutSeconds: 5
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: rails-template-stimulus-nginx-conf
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+        - name: assets
+          emptyDir: {}
