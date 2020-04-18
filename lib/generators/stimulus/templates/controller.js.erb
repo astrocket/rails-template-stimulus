@@ -1,0 +1,14 @@
+// <div data-controller="<%= controller_pattern %>">
+//
+// </div>
+import { Controller } from "stimulus";
+import api from 'utils/api';
+import helpers from 'utils/helpers';
+
+export default class extends Controller {
+  static targets = [ "" ];
+
+  connect() {
+    console.log("Stimulus connected from <%= stimulus_path %>");
+  }
+}
