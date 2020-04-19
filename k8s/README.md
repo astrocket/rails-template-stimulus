@@ -182,12 +182,16 @@ It's recommended to manage resources seperately to prevent downtime while updati
 * `k8s/project/rails-template-stimulus-nginx-conf.yaml` creates application level nginx's(* is different from ingress-nginx*) config-map, where we serve static files, redirect app traffic to puma. (It will be used when deploying k8s/app.yaml)
 
 ```bash
-kubectl apply -f k8s/project/rails-template-stimulus-nginx-conf.yaml
-kubectl apply -f k8s/web.yaml
-kubectl apply -f k8s/sidekiq.yaml
-kubectl apply -f k8s/ingress.yaml
+kubectl create secret generic rails-template-stimulus-secrets --from-file=rails-template-stimulus-master-key=config/master.key # push master.key to k8s secret
+kubectl apply -f k8s/ingress.yaml # from load-balancer to web service
+kubectl apply -f k8s/service.yaml # web service for web deployment
+kubectl apply -f k8s/project/rails-template-stimulus-nginx-conf.yaml # for web deployment's nginx
+kubectl apply -f k8s/web.yaml # puma & nginx
+kubectl apply -f k8s/sidekiq.yaml # sidekiq
 ... etc
 ```
+
+## Extra
 
 ### Monitoring Commands
 
@@ -229,7 +233,7 @@ rails deploy:demo:up
 rails deploy:demo:down # rollback
 
 # push master.key to kubernetes secret
-rails deploy:production:set_maseter_key
+rails deploy:production:set_master_key
 
 # apply production application nginx config
 # apply production ingress
@@ -278,21 +282,21 @@ delete secrets
 kb delete secret rails-template-stimulus-secrets
 ```
 
-## Tuning
+### Tuning
 
-### Puma
+#### Puma
 
 `process * thread * pod replicas < db connection`
 
 [heroku blog](https://devcenter.heroku.com/articles/deploying-rails-applications-with-the-puma-web-server#process-count-value)
 
-### Application Nginx
+#### Application Nginx
 
 [read](https://www.digitalocean.com/community/tutorials/how-to-optimize-nginx-configuration)
 
 You can customize application nginx through [config-map](k8s/project/rails-template-stimulus-nginx-conf.yaml) as usual.
 
-### Ingress Nginx
+#### Ingress Nginx
 
 To make your service scalable, you should consider tuning your [ingress-nginx](https://kubernetes.github.io/ingress-nginx) as your needs.
 
