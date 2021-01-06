@@ -7,7 +7,7 @@
     "@rails/ujs": "^6.0.0",
     "@rails/webpacker": "5.0.1",
     "@stimulus/polyfills": "^1.1.1",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "stimulus": "^1.1.1",
     "tailwindcss": "^1.2.0",
     "turbolinks": "^5.2.0"
