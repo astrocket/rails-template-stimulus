@@ -75,3 +75,15 @@ gem "letter_opener", "~> 1.7"
 gem "rspec-rails", "~> 5.0"
 
 gem "sidekiq_alive", "~> 2.1", :group => :production
+
+gem "inherited_resources", "~> 1.13", :git => "https://github.com/activeadmin/inherited_resources"
+
+gem "arbre", "~> 1.4", :git => "https://github.com/activeadmin/arbre"
+
+gem "activeadmin", "~> 2.9", :git => "https://github.com/tagliala/activeadmin.git", :branch => "feature/railties-7"
+
+gem "devise", "~> 4.8"
+gem "devise-i18n", "~> 1.10"
+gem "sass-rails", "~> 6.0"
+gem "activeadmin_addons", "~> 1.9"
+gem "arctic_admin", "~> 3.3"
