@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: astemplate-web
+spec:
+  selector:
+    matchLabels:
+      app: astemplate-web
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 50%
+  template:
+    metadata:
+      labels:
+        app: astemplate-web
+    spec:
+      imagePullSecrets:
+        - name: docker-hub-key
+      containers:
+        - name: app
+          image: # TODO Paste your image url
+          imagePullPolicy: Always
+          command: ["bin/rails", "s", "-b", "0.0.0.0"]
+          env:
+          - name: RAILS_ENV
+            value: "production"
+          - name: RAILS_LOG_TO_STDOUT
+            value: "true"
+          - name: RAILS_SERVE_STATIC_FILES
+            value: "true"
+          - name: REDIS_URL
+            value: "redis://astemplate-redis-svc:6379"
+          - name: RAILS_MASTER_KEY
+            valueFrom:
+              secretKeyRef:
+                name: astemplate-secrets
+                key: astemplate-master-key
+          volumeMounts:
+            - mountPath: /assets
+              name: assets
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 1000Mi
+            limits:
+              cpu: 1100m
+              memory: 1100Mi
+          readinessProbe:
+            httpGet:
+              path: /health_check
+              port: 3000
+            periodSeconds: 5
+            successThreshold: 2
+            failureThreshold: 2
+            timeoutSeconds: 5
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - "cp -r /app/public/* /assets"
+        - name: nginx
+          image: nginx:1.17-alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - mountPath: /assets
+              name: assets
+              readOnly: true
+            - mountPath: /etc/nginx/nginx.conf
+              name: nginx-conf
+              subPath: nginx.conf
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /health_check
+              port: 80
+            periodSeconds: 5
+            successThreshold: 2
+            failureThreshold: 2
+            timeoutSeconds: 5
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: astemplate-nginx-conf
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+        - name: assets
+          emptyDir: {}
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: astemplate-web
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: astemplate-web
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: 60
