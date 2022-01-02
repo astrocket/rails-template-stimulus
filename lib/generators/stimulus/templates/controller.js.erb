@@ -1,0 +1,25 @@
+// <div data-controller="<%= controller_pattern %>">
+//
+// </div>
+import { Controller } from "@hotwired/stimulus";
+import api from "utils/api";
+import helpers from 'utils/helpers';
+
+// https://stimulus.hotwired.dev/reference
+export default class extends Controller {
+  static targets = [ "" ];
+  static classes = [ "" ]
+  static values = {};
+
+  initialize() {
+
+  }
+
+  connect() {
+    console.log("Stimulus connected from <%= stimulus_path %>");
+  }
+
+  disconnect() {
+
+  }
+}

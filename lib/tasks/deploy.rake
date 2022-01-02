@@ -1,0 +1,92 @@
+require 'io/console'
+require "bundler/vendor/thor/lib/thor/shell"
+extend Bundler::Thor::Shell
+
+def terminal_length
+  require 'io/console'
+  IO.console.winsize[1]
+rescue LoadError
+  Integer(`tput co`)
+end
+
+def full_liner(string)
+  remaining_length = terminal_length - string.length - 1
+  "#{string} " + "#{'-' * remaining_length}"
+end
+
+def log_containers(app)
+  puts set_color("Please type one of your #{app}'s container names", :blue, :bold)
+
+  names = `kubectl get pods -l app=#{app} -o jsonpath='{.items[0].spec.containers[*].name}'`.split(" ")
+  names_table = {}
+  names.each_with_index do |name, _i|
+    names_table[_i] = name
+    puts set_color("[#{_i}] #{name}", :green)
+  end
+
+  names_i = STDIN.gets.strip.to_i
+  sh("kubectl logs -f --tail=5 --selector app=#{app} -c #{names_table[names_i]}")
+end
+
+namespace :deploy do
+  namespace :demo do
+    task :up => :environment do
+      sh("kubectl apply -f k8s/demo.yaml")
+    end
+
+    task :down => :environment do
+      sh("kubectl delete -f k8s/demo.yaml")
+    end
+  end
+
+  namespace :production do
+    task :push => :environment do
+      image_tag = nil # account/repository:tag
+      raise "No image_tag" if image_tag.nil?
+      sh("docker build --build-arg rails_env=production -t #{image_tag} .")
+      sh("docker push #{image_tag}")
+    end
+
+    task :set_master_key => :environment do
+      sh("kubectl create secret generic astemplate-secrets --from-file=astemplate-master-key=config/master.key")
+    end
+
+    namespace :ingress do
+      task :up => :environment do
+        sh("kubectl apply -f k8s/project/astemplate-nginx-conf.yaml")
+        sh("kubectl apply -f k8s/service.yaml")
+        sh("kubectl apply -f k8s/ingress.yaml")
+      end
+
+      task :down => :environment do
+        sh("kubectl delete secret astemplate-secrets")
+        sh("kubectl delete -f k8s/project/astemplate-nginx-conf.yaml")
+        sh("kubectl delete -f k8s/service.yaml")
+        sh("kubectl delete -f k8s/ingress.yaml")
+      end
+    end
+
+    task :migrate => :environment do
+      sh("kubectl apply -f k8s/migration.yaml")
+    end
+
+    task :all => :environment do
+      sh("kubectl apply -f k8s/web.yaml")
+      sh("kubectl apply -f k8s/sidekiq.yaml")
+    end
+  end
+
+  namespace :logs do
+    task :demo => :environment do
+      log_containers("astemplate-demo-web")
+    end
+
+    task :web => :environment do
+      log_containers("astemplate-web")
+    end
+
+    task :sidekiq => :environment do
+      log_containers("astemplate-sidekiq")
+    end
+  end
+end
