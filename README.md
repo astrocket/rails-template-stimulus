@@ -1,24 +1,49 @@
-# README
+## Start dev
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+```bash
+rails db:create
+rails db:migrate
+bundle && yarn && rails hot
+```
 
-Things you may want to cover:
+## Deploy
 
-* Ruby version
+### Build docker image
 
-* System dependencies
+from local
+```bash
+docker build --build-arg rails_env=production -t $DOCKER_ACC/$DOCKER_REPO:$IMG_TAG .
+```
 
-* Configuration
+from remote (you have to pass the master_key as an build-arg)
+```bash
+docker build --build-arg rails_env=production --build-arg master_key=$MASTER_KEY -t $DOCKER_ACC/$DOCKER_REPO:$IMG_TAG .
+```
 
-* Database creation
+[push to docker hub](http://blog.shippable.com/build-a-docker-image-and-push-it-to-docker-hub) (after login)
+```bash
+docker push $DOCKER_ACC/$DOCKER_REPO:$IMG_TAG
+```
 
-* Database initialization
+build & push image using [lib/tasks/deploy.rake](lib/tasks/deploy.rake)
 
-* How to run the test suite
+```bash
+rails deploy:production:push
+```
 
-* Services (job queues, cache servers, search engines, etc.)
+### Set credentials
 
-* Deployment instructions
+open credential and paste db, redis urls
 
-* ...
+```bash
+EDITOR="nano" rails credentials:edit
+
+# like this
+production:
+  database_url: DATABASE_URL
+  redis_url: REDIS_URL
+```
+
+### Kubernetes
+
+[k8s/README.md](k8s/README.md)
