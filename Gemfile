@@ -70,7 +70,7 @@ end
 
 gem "rails-i18n", "~> 7.0"
 gem "image_processing", "~> 1.12"
-gem "sidekiq", "~> 6.3"
+gem "sidekiq", "~> 6.4"
 gem "letter_opener", "~> 1.7"
 gem "rspec-rails", "~> 5.0"
 

@@ -187,6 +187,8 @@ GEM
     nio4r (2.5.8)
     nokogiri (1.12.5-x86_64-darwin)
       racc (~> 1.4)
+    nokogiri (1.12.5-x86_64-linux)
+      racc (~> 1.4)
     orm_adapter (0.5.0)
     pg (1.2.3)
     public_suffix (4.0.6)
@@ -267,7 +269,7 @@ GEM
       sprockets (> 3.0)
       sprockets-rails
       tilt
-    sidekiq (6.3.1)
+    sidekiq (6.4.0)
       connection_pool (>= 2.2.2)
       rack (~> 2.0)
       redis (>= 4.2.0)
@@ -284,6 +286,8 @@ GEM
     stimulus-rails (1.0.2)
       railties (>= 6.0.0)
     tailwindcss-rails (2.0.2-x86_64-darwin)
+      railties (>= 6.0.0)
+    tailwindcss-rails (2.0.2-x86_64-linux)
       railties (>= 6.0.0)
     thor (1.1.0)
     tilt (2.0.10)
@@ -310,6 +314,7 @@ GEM
 
 PLATFORMS
   x86_64-darwin-20
+  x86_64-linux
 
 DEPENDENCIES
   activeadmin (~> 2.9)!
@@ -332,7 +337,7 @@ DEPENDENCIES
   redis (~> 4.0)
   rspec-rails (~> 5.0)
   sass-rails (~> 6.0)
-  sidekiq (~> 6.3)
+  sidekiq (~> 6.4)
   sidekiq_alive (~> 2.1)
   sprockets-rails
   stimulus-rails
