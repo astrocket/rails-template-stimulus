@@ -28,7 +28,7 @@ Rails.application.configure do
   # config.assets.css_compressor = :sass
 
   # Do not fallback to assets pipeline if a precompiled asset is missed.
-  config.assets.compile = false
+  config.assets.compile = true
 
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
@@ -90,4 +90,23 @@ Rails.application.configure do
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
+  config.exceptions_app = self.routes
+
+  config.cache_store = :redis_cache_store, {
+    url: "#{Rails.application.credentials.dig(:production, :redis_url) || ENV["REDIS_URL"]}/2",
+    pool_size: 5, # https://guides.rubyonrails.org/caching_with_rails.html#connection-pool-options
+    pool_timeout: 3,
+    connect_timeout: 10, # Defaults to 20 seconds
+    read_timeout: 1, # Defaults to 1 second
+    write_timeout: 1, # Defaults to 1 second
+    reconnect_attempts: 3, # Defaults to 0
+    reconnect_delay: 0.1,
+    reconnect_delay_max: 0.2,
+    error_handler: ->(method:, returning:, exception:) {
+      Sentry.capture_exception exception, level: "warning",
+        tags: {method: method, returning: returning}
+    }
+  }
+
+  config.kredis.connector = ->(config) { ConnectionPool::Wrapper.new(size: 5, timeout: 3) { Redis.new(config) } } # redis from shared.yml
 end
