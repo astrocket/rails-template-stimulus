@@ -83,3 +83,11 @@ gem "database_cleaner-active_record", "~> 2.0", :group => :test
 
 gem "sidekiq-cron", "~> 1.9", :group => :production
 gem "sidekiq_alive", "~> 2.1", :group => :production
+
+gem "activeadmin", "~> 2.13"
+
+gem "devise", "~> 4.8"
+gem "devise-i18n", "~> 1.10"
+gem "sass-rails", "~> 6.0"
+gem "activeadmin_addons", "~> 1.9"
+gem "arctic_admin", "~> 3.3"
