@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rails-template-stimulus-migration
+spec:
+  ttlSecondsAfterFinished: 15
+  template:
+    spec:
+      imagePullSecrets:
+        - name: digitalocean-access-token
+      containers:
+        - name: migration-app
+          image: $IMAGE_TAG
+          imagePullPolicy: Always
+          command: [ "/bin/sh","-c" ]
+          args: [ "bin/rails db:migrate" ]
+          env:
+          - name: RAILS_ENV
+            value: "production"
+          - name: RAILS_MASTER_KEY
+            valueFrom:
+              secretKeyRef:
+                name: rails-template-stimulus-secrets
+                key: rails-template-stimulus-master-key
+      restartPolicy: Never

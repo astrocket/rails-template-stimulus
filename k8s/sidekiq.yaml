@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rails-template-stimulus-sidekiq
+spec:
+  selector:
+    matchLabels:
+      app: rails-template-stimulus-sidekiq
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 50%
+  template:
+    metadata:
+      labels:
+        app: rails-template-stimulus-sidekiq
+    spec:
+      imagePullSecrets:
+        - name: digitalocean-access-token
+      containers:
+        - name: sidekiq
+          image: $IMAGE_TAG
+          imagePullPolicy: Always
+          command: ["/bin/sh","-c"]
+          args: ["bundle exec sidekiq -C config/sidekiq.yml"]
+          env:
+          - name: RAILS_ENV
+            value: "production"
+          - name: RAILS_LOG_TO_STDOUT
+            value: "true"
+          - name: REDIS_URL
+            value: "redis://rails-template-stimulus-redis-svc:6379"
+          - name: DEPLOY_VERSION
+            value: $IMAGE_TAG
+          - name: RAILS_MASTER_KEY
+            valueFrom:
+              secretKeyRef:
+                name: rails-template-stimulus-secrets
+                key: rails-template-stimulus-master-key
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 1000Mi
+            limits:
+              cpu: 1100m
+              memory: 1100Mi
+          ports:
+            - containerPort: 7433
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7433
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7433
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            successThreshold: 2
+            failureThreshold: 2
+            timeoutSeconds: 5
+          lifecycle:
+            preStop:
+              exec:
+                command: ["k8s/sidekiq_quiet"]
+      terminationGracePeriodSeconds: 300
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: rails-template-stimulus-sidekiq
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rails-template-stimulus-sidekiq
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: 60

@@ -1,0 +1,45 @@
+FROM ruby:3.1.2-alpine
+
+RUN apk add \
+    bash git openssh \
+    nano \
+    curl-dev \
+    ca-certificates \
+    build-base \
+    libxml2-dev \
+    tzdata \
+    postgresql-dev \
+    yarn \
+    imagemagick \
+    vips-dev \
+    libc6-compat \
+    gettext
+
+ARG master_key
+ENV MASTER_KEY=$master_key
+
+ARG deploy_version
+ENV DEPLOY_VERSION=$deploy_version
+
+ARG secret_key_base
+ENV SECRET_KEY_BASE=$secret_key_base
+
+ARG rails_env
+ENV RAILS_ENV=$rails_env
+
+ARG bundle_dir
+ENV BUNDLE_DIR=$bundle_dir
+
+ENV RAILS_ROOT /app
+
+RUN mkdir -p $RAILS_ROOT
+WORKDIR $RAILS_ROOT
+
+COPY Gemfile Gemfile.lock ./
+RUN gem install bundler:2.3.4
+RUN bundle config build.google-protobuf --with-cflags=-D__va_copy=va_copy
+RUN BUNDLE_FORCE_RUBY_PLATFORM=1 bundle install --path $BUNDLE_DIR --jobs 20 --retry 5 --without development test
+
+COPY . .
+
+RUN bundle exec rake assets:precompile
