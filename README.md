@@ -1,24 +1,28 @@
-# README
+## Start dev
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+```bash
+rails db:create
+rails db:migrate
+bundle && yarn && rails dev
+```
 
-Things you may want to cover:
+## Deploy
 
-* Ruby version
+[.circleci/config.yml](https://circleci.com/)
 
-* System dependencies
+### Set credentials
 
-* Configuration
+open credential and paste db, redis urls
 
-* Database creation
+```bash
+EDITOR="nano" rails credentials:edit
 
-* Database initialization
+# like this
+production:
+  database_url: DATABASE_URL
+  redis_url: REDIS_URL
+```
 
-* How to run the test suite
+### Kubernetes
 
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+[k8s/README.md](k8s/README.md)
